@@ -30,7 +30,7 @@
 #import "IQAssetsPickerController.h"
 #import "IQAssetsAlbumViewCell.h"
 
-@interface IQAssetsPickerController ()
+@interface IQAssetsPickerController () <PHPhotoLibraryChangeObserver>
 
 @property UIBarButtonItem *cancelBarButton;
 @property UIBarButtonItem *doneBarButton;
@@ -92,6 +92,9 @@
     [self.tableView registerClass:[IQAssetsAlbumViewCell class] forCellReuseIdentifier:NSStringFromClass([IQAssetsAlbumViewCell class])];
     
     [self refreshAlbumList];
+
+    // Register for photo library changes
+    [[PHPhotoLibrary sharedPhotoLibrary] registerChangeObserver:self];
 }
 
 - (void)viewWillAppear:(BOOL)animated
@@ -105,6 +108,15 @@
     }
     
     [self updateSelectedCountAnimated:animated];
+}
+
+- (void)viewWillDisappear:(BOOL)animated {
+    [super viewWillAppear: animated];
+
+    // Unregister the observer while this view will be destroyed
+    if (self.isMovingFromParentViewController || self.isBeingDismissed) {
+        [[PHPhotoLibrary sharedPhotoLibrary] unregisterChangeObserver: self];
+    }
 }
 
 -(void)refreshAlbumList
@@ -239,7 +251,7 @@
             weakSelf.isLoading = NO;
             weakSelf.sections = allSections;
             
-            if (allSections.count > 0)
+            if (allSections.count > 0 && weakSelf.tableView.indexPathsForVisibleRows.count == 0)
             {
                 [weakSelf.tableView insertSections:[NSIndexSet indexSetWithIndexesInRange:NSMakeRange(0, allSections.count)] withRowAnimation:UITableViewRowAnimationFade];
             }
@@ -502,6 +514,13 @@
         assetsVC.selectedItems = self.selectedItems;
         [self.navigationController pushViewController:assetsVC animated:YES];
     }
+}
+
+#pragma mark - PHPhotoLibraryChangeObserver
+- (void)photoLibraryDidChange:(PHChange *)changeInstance {
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self refreshAlbumList];
+    });
 }
 
 @end

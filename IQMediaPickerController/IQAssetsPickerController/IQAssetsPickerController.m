@@ -250,15 +250,7 @@
         [[NSOperationQueue mainQueue] addOperationWithBlock:^{
             weakSelf.isLoading = NO;
             weakSelf.sections = allSections;
-            
-            if (allSections.count > 0 && weakSelf.tableView.indexPathsForVisibleRows.count == 0)
-            {
-                [weakSelf.tableView insertSections:[NSIndexSet indexSetWithIndexesInRange:NSMakeRange(0, allSections.count)] withRowAnimation:UITableViewRowAnimationFade];
-            }
-            else
-            {
-                [weakSelf.tableView reloadData];
-            }
+            [weakSelf.tableView reloadData];
         }];
     }];
 }
